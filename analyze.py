@@ -6,8 +6,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import audioread
 import IPython.display as ipd
 
+from tqdm import tqdm 
 
 class GTZANAnalyzer:
     def __init__(self, dataset_path="gtzan\genres_original"):
@@ -109,9 +111,26 @@ class GTZANAnalyzer:
             "rms": rms
         }
 
+    def clean_dataset(self):
+        """Suppress all corrupted files"""
+        genres = os.listdir(self.dataset_path)
+        for genre in tqdm(genres):
+            genre_path = os.path.join(self.dataset_path, genre)
+            if os.path.isdir(genre_path):
+                for file in os.listdir(genre_path):
+                    if file.endswith('.wav'):
+                        file_path = os.path.join(genre_path, file)
+                        try:
+                            wav, sr = librosa.load(file_path)
+                        except (audioread.exceptions.NoBackendError) as e:
+                            print(f"File corrupted: {file} -> Removing it.")
+                            os.remove(file_path)
+
 if __name__ == "__main__":
     analyzer = GTZANAnalyzer()
-    analyzer.plot_genre_distribution()
-    ipd.display(analyzer.play_random_sample())
-    analyzer.plot_spectrogram("blues.00000.wav")
+    #analyzer.plot_genre_distribution()
+    #analyzer.clean_dataset()
+    #analyzer.plot_genre_distribution()
+    #ipd.display(analyzer.play_random_sample())
+    #analyzer.plot_spectrogram("blues.00000.wav")
     analyzer.extract_features("blues.00000.wav")
